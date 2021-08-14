@@ -1,11 +1,11 @@
 import { TradeOffer } from '@tf2autobot/tradeoffer-manager';
 import Bot from '../../../Bot';
 
-export default function invalid(offer: TradeOffer, bot: Bot): void {
+export default async function invalid(offer: TradeOffer, bot: Bot): Promise<void> {
     offer.data('isInvalid', true);
     const custom = bot.options.customMessage.tradedAway;
 
-    bot.sendMessage(
+    return bot.sendMessage(
         offer.partner,
         custom
             ? custom
