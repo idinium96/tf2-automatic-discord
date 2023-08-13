@@ -28,7 +28,6 @@ import { Blocked, BPTFGetUserInfo } from './interfaces';
 import Handler, { OnRun } from '../Handler';
 import Bot, { SteamTokens } from '../Bot';
 import Pricelist, { Entry, PricesDataObject, PricesObject } from '../Pricelist';
-import Commands from '../Commands/Commands';
 import CartQueue from '../Carts/CartQueue';
 import Inventory from '../Inventory';
 import TF2Inventory from '../TF2Inventory';
@@ -52,6 +51,7 @@ import filterAxiosError from '@tf2autobot/filter-axios-error';
 import sendTf2SystemMessage from '../../lib/DiscordWebhook/sendTf2SystemMessage';
 import sendTf2DisplayNotification from '../../lib/DiscordWebhook/sendTf2DisplayNotification';
 import sendTf2ItemBroadcast from '../../lib/DiscordWebhook/sendTf2ItemBroadcast';
+import CommandHandler from '../Commands/CommandHandler';
 
 const filterReasons = (reasons: string[]) => {
     const filtered = new Set(reasons);
@@ -59,7 +59,7 @@ const filterReasons = (reasons: string[]) => {
 };
 
 export default class MyHandler extends Handler {
-    readonly commands: Commands;
+    readonly commandHandler: CommandHandler;
 
     readonly autokeys: Autokeys;
 
@@ -200,7 +200,7 @@ export default class MyHandler extends Handler {
     constructor(public bot: Bot, private priceSource: IPricer) {
         super(bot);
 
-        this.commands = new Commands(bot, priceSource);
+        this.commandHandler = new CommandHandler(bot, priceSource);
         this.cartQueue = new CartQueue(bot);
         this.autokeys = new Autokeys(bot);
 
@@ -208,6 +208,7 @@ export default class MyHandler extends Handler {
 
         PriceCheckQueue.setBot(this.bot);
         PriceCheckQueue.setRequestCheckFn(this.priceSource.requestCheck.bind(this.priceSource));
+        this.commandHandler.registerCommands();
     }
 
     onRun(): Promise<OnRun> {
@@ -490,7 +491,7 @@ export default class MyHandler extends Handler {
                     : this.recentlySentMessage[steamID.redirectAnswerTo.author.id]) + 1;
         }
 
-        await this.commands.processMessage(steamID, message);
+        await this.commandHandler.handleCommand(steamID, message);
     }
 
     onLoginToken(loginToken: SteamTokens): void {
